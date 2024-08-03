@@ -1,0 +1,12 @@
+datasets==2.20.0
+evaluate==0.4.2
+matplotlib==3.9.1
+numpy==2.0.1
+pandas==2.2.2
+pytorch_lightning==2.3.3
+regex==2024.5.15
+scikit_learn==1.5.1
+seaborn==0.13.2
+torch==2.4.0+cu124
+torchmetrics==1.4.1
+transformers==4.43.1
