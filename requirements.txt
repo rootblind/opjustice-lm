@@ -1,7 +1,8 @@
 datasets==2.20.0
 evaluate==0.4.2
-matplotlib==3.9.1
-numpy==2.0.1
+fastapi==0.112.1
+matplotlib==3.9.2
+numpy==2.1.0
 pandas==2.2.2
 pytorch_lightning==2.3.3
 regex==2024.5.15
@@ -10,3 +11,4 @@ seaborn==0.13.2
 torch==2.4.0+cu124
 torchmetrics==1.4.1
 transformers==4.43.1
+uvicorn==0.30.6

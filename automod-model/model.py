@@ -74,7 +74,7 @@ encoded_dataset = dataset.map(preprocess_data, batched=True, remove_columns=data
 encoded_dataset.set_format("torch")
 
 # preparing variables
-batch_size = 1 # i have a RTX 2050 on a Lenovo laptop, it has 4GB so I am ranging between 8-16 batches
+batch_size = 8 # i have a RTX 2050 on a Lenovo laptop, it has 4GB so I am ranging between 8-16 batches
 metric_name = "f1"
 output_dir = './automod-model/model_versions/automod-model-training-7.1'
 

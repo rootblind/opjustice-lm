@@ -1,12 +1,9 @@
-"""
-Loading the model for testing inputs and analyze the outputs
-
-Most of the code below is taken from model.py so I won't recomment it
-"""
-
+from fastapi import FastAPI,Request
+# from pydantic import BaseModel
+import uvicorn
+import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-import numpy as np
 from datasets import load_dataset, load_from_disk
 import os
 
@@ -20,34 +17,16 @@ else:
     dataset = load_dataset('rootblind/opjustice-dataset')
     dataset.save_to_disk('./automod-model/dataset')
 
-# Load the tokenizer
+app = FastAPI()
+
 model_dir = './automod-model/model_versions/automod-model-training-7'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-# Define the labels and create id2label and label2id mappings
 labels = [label for label in dataset['train'].features.keys() if label != 'Message']
 id2label = {idx: label for idx, label in enumerate(labels)}
 label2id = {label: idx for idx, label in enumerate(labels)}
 
-# Preprocessing function to encode the data
-def preprocess_data(examples):
-    # Encode the texts
-    text = examples["Message"]
-    encoding = tokenizer(text, padding="max_length", truncation=True, max_length=128)
-    # Add labels
-    labels_batch = {k: examples[k] for k in examples.keys() if k in labels}
-    labels_matrix = np.zeros((len(text), len(labels)))
-    for idx, label in enumerate(labels):
-        labels_matrix[:, idx] = labels_batch[label]
-    encoding["labels"] = labels_matrix.tolist()
-    return encoding
 
-# Preprocess the dataset
-encoded_dataset = dataset.map(preprocess_data, batched=True, remove_columns=dataset['train'].column_names)
-encoded_dataset.set_format("torch")
-# Load the pre-trained model
 model = AutoModelForSequenceClassification.from_pretrained(model_dir,
                                                            local_files_only=True,
                                                            problem_type="multi_label_classification", 
@@ -55,14 +34,9 @@ model = AutoModelForSequenceClassification.from_pretrained(model_dir,
                                                            id2label=id2label,
                                                            label2id=label2id).to(device)
 
-# Set model to evaluation mode
 model.eval()
 
-# Define the text for inference
-
-
-# Tokenize the text
-def send_input(text):
+def process_input(text):
     encoding = tokenizer(text, return_tensors="pt")
     encoding = {k: v.to(model.device) for k, v in encoding.items()}
 
@@ -85,9 +59,27 @@ def send_input(text):
     if 'OK' in predicted_labels:
         predicted_labels = ['OK']
     # Print the predicted labels
-    print(text[:50] + '...', predicted_labels)
-    print(predictions)
-    print(probs)
-    return predicted_labels
+    return {"labels":predicted_labels}
 
-print(send_input('te omor sa o fut pe mata'))
+
+    
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.get("/hello")
+def read_root():
+    return {"Hello": "Hello"}
+
+@app.post("/classify")
+async def classify(request: Request):
+    data = await request.json()
+    if not 'text' in data:
+        return {'Input': 'Invalid input'}
+    
+    response = process_input(data['text'])
+    return response
+
+if __name__ == "__main__":
+    uvicorn.run("model_fastapi:app", host='0.0.0.0', port=8080, reload=True)
