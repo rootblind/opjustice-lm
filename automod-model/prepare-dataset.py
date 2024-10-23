@@ -18,7 +18,7 @@ else:
     dataset = load_dataset('rootblind/opjustice-dataset')
     dataset.save_to_disk('./automod-model/dataset')
 # Load the tokenizer
-model_dir = './automod-model/model_versions/automod-model-training-7'
+model_dir = './automod-model/model_versions/automod-model-training-9'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
@@ -195,6 +195,8 @@ def filter_dataset(source):
     for row in source:
         message = row['Message']
         message = filter(message)
+        if ' ' not in message:
+            continue
         if len(message) > 2 and alphabet_pattern.search(message) and not url_pattern.fullmatch(message):
             messages.append(message)
     messages = list(set(messages))
@@ -234,7 +236,7 @@ def load_source(filename):
 def executor(source, destination):
     reader = load_source(source) # reading the unlabeled data
     data = filter_dataset(reader) # filter the data to be formatted for processing
-    labeled_data = label_dataset_v2(data) # send the rows (the raw text) to the model to be scored and write the text with its results in csv format
+    labeled_data = label_dataset(data) # send the rows (the raw text) to the model to be scored and write the text with its results in csv format
     #append_csv(labeled_data, destination) # alternative to append the dataset directly
     write_csv(labeled_data, destination) # alternative to create the file instead; I prefer this approach because I can review the dataset before appending
     # especially useful to correct the dataset for the next training loop

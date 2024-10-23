@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, HTTPException,Request
 # from pydantic import BaseModel
 import uvicorn
 import numpy as np
@@ -19,7 +19,7 @@ else:
 
 app = FastAPI()
 
-model_dir = './automod-model/model_versions/automod-model-training-7'
+model_dir = './automod-model/model_versions/automod-model-training-9'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 labels = [label for label in dataset['train'].features.keys() if label != 'Message']
@@ -76,10 +76,10 @@ def read_root():
 async def classify(request: Request):
     data = await request.json()
     if not 'text' in data:
-        return {'Input': 'Invalid input'}
+        raise HTTPException(status_code=400, detail="Text input required")
     
     response = process_input(data['text'])
     return response
 
 if __name__ == "__main__":
-    uvicorn.run("model_fastapi:app", host='0.0.0.0', port=8080, reload=True)
+    uvicorn.run("model_fastapi:app", host='127.0.0.1', port=8080, reload=True)

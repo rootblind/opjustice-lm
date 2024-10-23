@@ -40,7 +40,7 @@ id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)}
 
 
-model_name = './automod-model/model_versions/automod-model-training-6' #'readerbench/RoBERT-base'
+model_name = './automod-model/model_versions/automod-model-training-8' #'readerbench/RoBERT-base'
 
 # loading the tokenizer, device and the model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -74,9 +74,9 @@ encoded_dataset = dataset.map(preprocess_data, batched=True, remove_columns=data
 encoded_dataset.set_format("torch")
 
 # preparing variables
-batch_size = 8 # i have a RTX 2050 on a Lenovo laptop, it has 4GB so I am ranging between 8-16 batches
+batch_size = 16 # i have a RTX 2050 on a Lenovo laptop, it has 4GB so I am ranging between 8-16 batches
 metric_name = "f1"
-output_dir = './automod-model/model_versions/automod-model-training-7.1'
+output_dir = './automod-model/model_versions/automod-model-training-9'
 
 args = TrainingArguments(
     output_dir=output_dir,
@@ -85,7 +85,7 @@ args = TrainingArguments(
     learning_rate=2e-5,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
-    num_train_epochs=1,
+    num_train_epochs=8,
     weight_decay=0.01,
     load_best_model_at_end=True,
     metric_for_best_model=metric_name,

@@ -21,7 +21,7 @@ else:
     dataset.save_to_disk('./automod-model/dataset')
 
 # Load the tokenizer
-model_dir = './automod-model/model_versions/automod-model-training-7'
+model_dir = './automod-model/model_versions/automod-model-training-9'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
