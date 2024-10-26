@@ -1,5 +1,6 @@
 import regex as re
 import csv
+import pandas as pd
 
 def filter_dataset(source):
     # source is the list of rows
@@ -22,14 +23,35 @@ def filter_dataset(source):
     for row in source:
         message = row['Message']
         message = filter(message)
-        #if ' ' not in message:
-        #    continue
+        if ' ' not in message:
+            continue
         if len(message) > 2 and alphabet_pattern.search(message):
             row['Message'] = message
             messages.append(row)
     print('Filter executed.')
 
     return messages
+
+def remove_duplicates(data):
+    pd_data = {
+        "Message": [],
+        "OK": [],
+        "Aggro": [],
+        "Violence": [],
+        "Sexual": [],
+        "Hateful": []
+    }
+    columns = ["Message", "OK", "Aggro", "Violence", "Sexual", "Hateful"]
+    # converting the data to pd dataframe format to remove duplicates
+    for row in data:
+        for label in columns:
+            pd_data[label].append(row[label])
+    df = pd.DataFrame(data=pd_data)
+    df.drop_duplicates(subset="Message", inplace=True)
+    
+    return df
+
+
 
 def load_source(filename):
     data = []
@@ -48,7 +70,9 @@ def write_csv(source, destination):
             writer.writerow(row)
 
     print(f'{len(source)} rows written.')
+
 reader = load_source('./automod-model/train.csv')
 data = filter_dataset(reader)
-write_csv(data, './automod-model/curated.csv')
+df_unique = remove_duplicates(data)
+df_unique.to_csv('./automod-model/curated.csv', index=False, encoding='utf-8')
 print("Done")
