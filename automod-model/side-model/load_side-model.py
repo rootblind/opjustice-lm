@@ -13,14 +13,14 @@ import os
 
 # loading the model and methods for the training loop and testing
 
-if os.path.exists('./automod-model/dataset'):
-    dataset = load_from_disk('./automod-model/dataset')
+if os.path.exists('./automod-model/side-model/dataset'):
+    dataset = load_from_disk('./automod-model/side-model/dataset')
 else:
-    os.mkdir('./automod-model/dataset')
-    dataset = load_dataset('rootblind/opjustice-dataset')
-    dataset.save_to_disk('./automod-model/dataset')
+    os.mkdir('./automod-model/side-model/dataset')
+    dataset = load_dataset('rootblind/opjustice_side-model-dataset')
+    dataset.save_to_disk('./automod-model/side-model/dataset')
 # Load the tokenizer
-model_dir = './automod-model/model_versions/automod-model-training-9'
+model_dir = './automod-model/side-model/model_ver/v1'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,7 +34,7 @@ label2id = {label: idx for idx, label in enumerate(labels)}
 def preprocess_data(examples):
     # Encode the texts
     text = examples["Message"]
-    encoding = tokenizer(text, padding="max_length", truncation=True, max_length=128)
+    encoding = tokenizer(text, padding="max_length", truncation=True, max_length=400)
     # Add labels
     labels_batch = {k: examples[k] for k in examples.keys() if k in labels}
     labels_matrix = np.zeros((len(text), len(labels)))
@@ -81,12 +81,11 @@ def send_input(text):
 
     # Convert predicted ids to actual label names
     predicted_labels = [id2label[idx] for idx, label in enumerate(predictions) if label == 1.0]
-    if 'OK' in predicted_labels:
-        predicted_labels = ['OK']
+
     # Print the predicted labels
     print(text[:50] + '...', predicted_labels)
     print(predictions)
     print(probs)
     return predicted_labels
 
-print(send_input('te omor sa o fut pe mata'))
+print(send_input('era sa o bat pe ma-ta'))

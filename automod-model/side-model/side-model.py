@@ -1,16 +1,3 @@
-"""
-Multi-label text classification model.
-
-The goal of this model is to accurately score messages in romanian language based on toxicity labels ['OK','Insult','Violence','Sexual','Hateful','Flirt','Spam','Aggro']
-Where OK is a message that has no toxicity and the others as the name implies.
-The model is trained on a dataset based on discord messages from a few servers and it is oriented towards the moderation levels of League of Legends Romania discord server
-
-opjustice-lm is based on readerbench/RoBERT-base language model from the huggingface hub.
-
-The code below is based off of the notebook example from google colabs
-https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=mEkAQleMMT0k
-"""
-
 import os
 import torch
 import numpy as np
@@ -20,7 +7,7 @@ from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 from transformers import EvalPrediction
 
 class ToxicityDataset:
-    def __init__(self, dataset_path='./automod-model/dataset', dataset_name='rootblind/opjustice-dataset'):
+    def __init__(self, dataset_path='./automod-model/side-model/dataset', dataset_name='rootblind/opjustice_side-model-dataset'):
         self.dataset_path = dataset_path
         self.dataset_name = dataset_name
         self.dataset = self.load_dataset()
@@ -46,7 +33,7 @@ class ToxicityDataset:
 
     def preprocess_data(self, examples, tokenizer):
         text = examples["Message"]
-        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=128)
+        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=400)
         labels_batch = {k: examples[k] for k in examples.keys() if k in self.labels}
         labels_matrix = np.zeros((len(text), len(self.labels)))
 
@@ -74,6 +61,7 @@ class ToxicityModel:
                                                                    num_labels=num_labels,
                                                                    id2label=id2label,
                                                                    label2id=label2id).to(self.device)
+        
         return model
 
     def predict(self, text, tokenizer):
@@ -135,12 +123,18 @@ class ToxicityTrainer:
         )
 
     def train(self):
+        for param in self.model.parameters():
+            if not param.is_contiguous():
+                param.data = param.data.contiguous()
         self.trainer.train()
 
     def evaluate(self):
         return self.trainer.evaluate()
 
     def save_model(self):
+        for param in self.model.parameters():
+            if not param.is_contiguous():
+                param.data = param.data.contiguous()
         self.trainer.save_model(self.output_dir)
 
 
@@ -149,8 +143,8 @@ if __name__ == "__main__":
     toxicity_dataset = ToxicityDataset()
     
     # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained('./automod-model/model_versions/automod-model-training-8')
-    toxicity_model = ToxicityModel(model_name='./automod-model/model_versions/automod-model-training-8', 
+    tokenizer = AutoTokenizer.from_pretrained('readerbench/RoBERT-base')
+    toxicity_model = ToxicityModel(model_name='readerbench/RoBERT-base', 
                                    num_labels=len(toxicity_dataset.labels), 
                                    id2label=toxicity_dataset.id2label, 
                                    label2id=toxicity_dataset.label2id)
@@ -163,9 +157,9 @@ if __name__ == "__main__":
                               tokenizer=tokenizer, 
                               train_dataset=encoded_dataset['train'], 
                               eval_dataset=encoded_dataset['test'], 
-                              output_dir='./automod-model/model_versions/automod-model-training-9.1',
-                              batch_size=1,
-                              epochs=1
+                              output_dir='./automod-model/side-model/model_ver/v1',
+                              batch_size=16,
+                              epochs=8
                               )
 
     # Train and evaluate model
@@ -174,7 +168,7 @@ if __name__ == "__main__":
     trainer.save_model()
 
     # Example inference
-    text = "il iubiti la cat il pomeniti, taceti odata in plm ca e annoying si nu mai plangeti dupa el ca are ban de o sapt, va zice si blind oribii drq"
+    text = "sa o fut pe mata"
     logits = toxicity_model.predict(text, tokenizer)
     sigmoid = torch.nn.Sigmoid()
     probs = sigmoid(logits.squeeze().cpu())

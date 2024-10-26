@@ -180,6 +180,7 @@ def label_dataset_v2(source): # this labeling method uses readerbench/ro-offense
 def filter_dataset(source):
     # source is the list of rows
     alphabet_pattern = re.compile(r'^[a-zA-Z]')
+    allowed_pattern = re.compile(r'[^a-zA-Z0-9 -]')
     url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 
     messages = []
@@ -189,6 +190,8 @@ def filter_dataset(source):
         message = message.replace('+rep', '')
         message = message.replace('-rep', '')
         message = message.replace('\n', ' ').replace('\r', ' ')
+        message = re.sub(url_pattern, '', message)
+        message = re.sub(allowed_pattern, '', message)
         message = message.lstrip()
         return message
     
@@ -197,7 +200,7 @@ def filter_dataset(source):
         message = filter(message)
         if ' ' not in message:
             continue
-        if len(message) > 2 and alphabet_pattern.search(message) and not url_pattern.fullmatch(message):
+        if len(message) > 2 and alphabet_pattern.search(message) and allowed_pattern.fullmatch(message):
             messages.append(message)
     messages = list(set(messages))
     print('Filter executed.')
