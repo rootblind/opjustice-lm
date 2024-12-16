@@ -1,27 +1,15 @@
-"""
-Multi-label text classification model.
-
-The goal of this model is to accurately score messages in romanian language based on toxicity labels ['OK','Insult','Violence','Sexual','Hateful','Flirt','Spam','Aggro']
-Where OK is a message that has no toxicity and the others as the name implies.
-The model is trained on a dataset based on discord messages from a few servers and it is oriented towards the moderation levels of League of Legends Romania discord server
-
-opjustice-lm is based on readerbench/RoBERT-base language model from the huggingface hub.
-
-The code below is based off of the notebook example from google colabs
-https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=mEkAQleMMT0k
-"""
-
 import os
 import torch
 import numpy as np
 from datasets import load_dataset, load_from_disk
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
+from sklearn.model_selection import KFold
 from transformers import EvalPrediction
 import time
 
 class ToxicityDataset:
-    def __init__(self, dataset_path='./automod-model/dataset', dataset_name='rootblind/opjustice-dataset'):
+    def __init__(self, dataset_path='./automod-model/side-model/dataset', dataset_name='rootblind/opjustice_side-model-dataset'):
         self.dataset_path = dataset_path
         self.dataset_name = dataset_name
         self.dataset = self.load_dataset()
@@ -33,12 +21,12 @@ class ToxicityDataset:
             dataset = load_from_disk(self.dataset_path)
         else:
             os.mkdir(self.dataset_path)
-            dataset = load_dataset(self.dataset_name, data_files={"data": "data.csv", "train": "train.csv", "test": "test.csv"})
+            dataset = load_dataset(self.dataset_name, data_files={"train":"train.csv", "test":"test.csv", "data": "data.csv"})
             dataset.save_to_disk(self.dataset_path)
         return dataset
 
     def get_labels(self):
-        return [label for label in self.dataset['train'].features.keys() if label not in 'Message']
+        return [label for label in self.dataset['data'].features.keys() if label != 'Message']
 
     def create_label_mappings(self):
         id2label = {idx: label for idx, label in enumerate(self.labels)}
@@ -47,7 +35,7 @@ class ToxicityDataset:
 
     def preprocess_data(self, examples, tokenizer):
         text = examples["Message"]
-        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=400)
+        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=512)
         labels_batch = {k: examples[k] for k in examples.keys() if k in self.labels}
         labels_matrix = np.zeros((len(text), len(self.labels)))
 
@@ -58,7 +46,7 @@ class ToxicityDataset:
         return encoding
 
     def encode_dataset(self, tokenizer):
-        encoded_dataset = self.dataset.map(lambda x: self.preprocess_data(x, tokenizer), batched=True, remove_columns=self.dataset['train'].column_names)
+        encoded_dataset = self.dataset.map(lambda x: self.preprocess_data(x, tokenizer), batched=True, remove_columns=self.dataset['data'].column_names)
         encoded_dataset.set_format("torch")
         return encoded_dataset
 
@@ -70,8 +58,8 @@ class ToxicityModel:
         self.model = self.load_model(num_labels, id2label, label2id)
 
     def load_model(self, num_labels, id2label, label2id):
-        model = AutoModelForSequenceClassification.from_pretrained(self.model_name, 
-                                                                   problem_type="multi_label_classification", 
+        model = AutoModelForSequenceClassification.from_pretrained(self.model_name,
+                                                                   problem_type="multi_label_classification",
                                                                    num_labels=num_labels,
                                                                    id2label=id2label,
                                                                    label2id=label2id).to(self.device)
@@ -152,34 +140,58 @@ class ToxicityTrainer:
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     # Load dataset
+    start_time = time.time()
     toxicity_dataset = ToxicityDataset()
     
     # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained('readerbench/RoBERT-large')
-    toxicity_model = ToxicityModel(model_name='readerbench/RoBERT-large', 
-                                   num_labels=len(toxicity_dataset.labels), 
-                                   id2label=toxicity_dataset.id2label, 
-                                   label2id=toxicity_dataset.label2id)
+    tokenizer = AutoTokenizer.from_pretrained('readerbench/RoBERT-small')
     
     # Encode dataset
     encoded_dataset = toxicity_dataset.encode_dataset(tokenizer)
 
-    # Initialize trainer
-    trainer = ToxicityTrainer(model=toxicity_model.model, 
-                              tokenizer=tokenizer, 
-                              train_dataset=encoded_dataset['train'], 
-                              eval_dataset=encoded_dataset['test'], 
-                              output_dir='./automod-model/model_versions/v1-large',
-                              batch_size=1,
-                              epochs=1
-                              )
+    # K-Fold Cross Validation
+    k_folds = 5
+    kfold = KFold(n_splits=k_folds, shuffle=True)
+    all_metrics = []
 
-    # Train and evaluate model
-    trainer.train()
-    trainer.evaluate()
-    trainer.save_model()
+    # Prepare for K-Fold Cross Validation
+    all_labels = np.array(encoded_dataset['data'])  # Assuming encoded_dataset['labels'] holds the multi-labels
+
+    for fold, (train_idx, val_idx) in enumerate(kfold.split(all_labels)):
+        print(f'Fold {fold + 1}/{k_folds}')
+        
+        # Create DataLoader for current fold
+        train_subset = encoded_dataset['data'].select(train_idx)
+        val_subset = encoded_dataset['data'].select(val_idx)
+
+        # Initialize model for this fold
+        toxicity_model = ToxicityModel(model_name='readerbench/RoBERT-small', 
+                                       num_labels=len(toxicity_dataset.labels), 
+                                       id2label=toxicity_dataset.id2label, 
+                                       label2id=toxicity_dataset.label2id)
+
+        # Initialize trainer for this fold
+        trainer = ToxicityTrainer(model=toxicity_model.model, 
+                                  tokenizer=tokenizer, 
+                                  train_dataset=train_subset, 
+                                  eval_dataset=val_subset, 
+                                  output_dir=f'./automod-model/side-model/model_versions/v1-fold-{fold + 1}',
+                                  batch_size=16,
+                                  epochs=8
+                                  )
+
+        # Train and evaluate model for the current fold
+        trainer.train()
+        metrics = trainer.evaluate()
+        all_metrics.append(metrics)
+
+        # Save model for the current fold
+        trainer.save_model()
+
+    # Calculate average metrics across all folds
+    avg_metrics = {metric: np.mean([m[metric] for m in all_metrics]) for metric in all_metrics[0]}
+    print(f'Average Metrics: {avg_metrics}')
 
     # Example inference
     text = "mai taci in rasa ma-tii"
@@ -188,11 +200,11 @@ if __name__ == "__main__":
     probs = sigmoid(logits.squeeze().cpu())
     predictions = np.zeros(probs.shape)
     predictions[np.where(probs >= 0.5)] = 1
-    predictions[np.argmax(probs)] = 1
     predicted_labels = [toxicity_dataset.id2label[idx] for idx, label in enumerate(predictions) if label]
     
     print(predicted_labels)
     print(predictions)
     print(probs)
+
     end_time = time.time()
     print(f'Execution time: {(end_time - start_time):.2f} seconds.')

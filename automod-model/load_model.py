@@ -31,7 +31,7 @@ class ToxicityDataset:
         return dataset
 
     def get_labels(self):
-        return [label for label in self.dataset['train'].features.keys() if label not in 'Message']
+        return [label for label in self.dataset['data'].features.keys() if label not in 'Message']
 
     def create_label_mappings(self):
         id2label = {idx: label for idx, label in enumerate(self.labels)}
@@ -51,7 +51,7 @@ class ToxicityDataset:
         return encoding
 
     def encode_dataset(self, tokenizer):
-        encoded_dataset = self.dataset.map(lambda x: self.preprocess_data(x, tokenizer), batched=True, remove_columns=self.dataset['train'].column_names)
+        encoded_dataset = self.dataset.map(lambda x: self.preprocess_data(x, tokenizer), batched=True, remove_columns=self.dataset['data'].column_names)
         encoded_dataset.set_format("torch")
         return encoded_dataset
 
@@ -97,9 +97,11 @@ if __name__ == "__main__":
     
     # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained('./automod-model/model_versions/automod-model-training-10')
-    toxicity_model = ToxicityModel(model_name='./automod-model/model_versions/automod-model-training-10', 
+    toxicity_model = ToxicityModel(model_name='./automod-model/model_versions/m_v1-fold-1', 
                                    num_labels=len(toxicity_dataset.labels), 
                                    id2label=toxicity_dataset.id2label, 
                                    label2id=toxicity_dataset.label2id)
     
-    print(toxicity_model.label_text("test in pizda si cristosii matii", tokenizer))
+    text = 'duten pula mea'
+    print(toxicity_model.label_text(text, tokenizer))
+    print(toxicity_model.predict(text, tokenizer))

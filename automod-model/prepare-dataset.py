@@ -208,11 +208,11 @@ if __name__ == "__main__":
                                    id2label=toxicity_dataset.id2label, 
                                    label2id=toxicity_dataset.label2id)
     
-    unlabeled_data = UnlabeledData('./automod-model/train-unlabeled.csv')
+    unlabeled_data = UnlabeledData('./automod-model/data_dumps/train-unlabeled.csv')
 
-    df = pd.read_csv('./automod-model/partial-dataset.csv')
+    df = pd.read_csv('./automod-model/data_dumps/partial-dataset.csv')
     
     df_focus = DatasetFocusLabel(df, ["Aggro", "Violence", "Sexual", "Hateful"]).focus_dataset()
 
     classifier = DatasetClassifier(toxicity_model, tokenizer)
-    classifier.dataset_to_csv(df_focus, './automod-model/focus-notok.csv')
+    classifier.dataset_to_csv(df_focus, './automod-model/data_dumps/focus-notok.csv')
