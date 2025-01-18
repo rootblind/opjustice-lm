@@ -1,5 +1,5 @@
-Message,OK,Insult,Violence,Sexual,Hateful,Flirt,Spam,Aggro
-This message is ok,1,0,0,0,0,0,0,0
-This message is an insult,0,1,0,0,0,0,0,0
-This message is violent and hateful,0,0,1,0,1,0,0,0
-This is the worst message someone could ever type,0,1,1,1,1,1,1,1
+Message,OK,Aggro,Violence,Sexual,Hateful
+This message is ok,1,0,0,0,0,
+This message is an aggro,0,1,0,0,0
+This message is violent and hateful,0,0,1,0,1
+This is the worst message someone could ever type,0,1,1,1,1

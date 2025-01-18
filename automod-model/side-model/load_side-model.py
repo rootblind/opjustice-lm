@@ -20,7 +20,7 @@ else:
     dataset = load_dataset('rootblind/opjustice_side-model-dataset')
     dataset.save_to_disk('./automod-model/side-model/dataset')
 # Load the tokenizer
-model_dir = './automod-model/side-model/model_ver/v1'
+model_dir = './automod-model/side-model/model_versions/v1-fold-1'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -88,4 +88,4 @@ def send_input(text):
     print(probs)
     return predicted_labels
 
-print(send_input('era sa o bat pe ma-ta'))
+print(send_input('sa imi bag pula in ma-ta'))
