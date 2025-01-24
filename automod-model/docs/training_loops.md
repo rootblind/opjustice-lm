@@ -28,3 +28,16 @@ Accuracy: 0.7690464781983709
 ROC AUC: 0.8539663428343907
 ```
 
+## Training Loop 1
+
+Pre-training from initial, this training loop includes some corrections for unknown data to the first version.
+
+Additional messages: 323
+
+```
+F1 Score: 0.9334260385885624
+Precision: 0.9391395592864638
+Recall: 0.927781617138908
+Accuracy: 0.8739693757361602
+ROC AUC: 0.9429842964264138
+```

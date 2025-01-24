@@ -146,7 +146,7 @@ class Model:
             - tokenizer: the huggingface tokenizer
             - threshold: Default 0.5 is used to set which labels count
 
-            - returns: The logits
+            - returns: The probabilities
         """
         encoding = tokenizer(text, return_tensors="pt")
         encoding = {k: v.to(self.device) for k, v in encoding.items()}
@@ -158,6 +158,10 @@ class Model:
         probs = sigmoid(logits.squeeze().cpu())
         return probs
     def predictions(self, text, tokenizer, threshold=0.5):
+        """
+            Converts probabilities into scores
+            - returns an array of binary scores depending on probability and threshold
+        """
         probs = self.predict(text, tokenizer)
         predictions = np.zeros(probs.shape)
         predictions[np.where(probs >= threshold)] = 1
@@ -332,7 +336,7 @@ class DataToolkit():
         """
         return data[data[labels].eq(value).any(axis=1)]
     
-    def filter_text(self, text, patterns):
+    def filter_text(self, text, patterns=None):
         """
                 Filters the text input given by making it lowercase, swapping diactritics to their counterparts and removes
             the patterns.
@@ -351,8 +355,10 @@ class DataToolkit():
         text = text.replace('ș', 's')
         text = text.replace('ț', 't')
         text = text.replace('â', 'a')
-        for pattern in patterns:
-            text = re.sub(pattern, '', text)
+
+        if patterns:
+            for pattern in patterns:
+                text = re.sub(pattern, '', text)
         
         text = text.lstrip()
         return text

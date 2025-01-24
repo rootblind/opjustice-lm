@@ -23,7 +23,7 @@ if __name__ == "__main__":
     
     # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained('./automod-model/model_versions/v1')
-    model = Model(model_name='readerbench/RoBERT-small', 
+    model = Model(model_name='./automod-model/model_versions/v1', 
                                    num_labels=len(dataset.labels), 
                                    id2label=dataset.id2label, 
                                    label2id=dataset.label2id)
@@ -36,9 +36,9 @@ if __name__ == "__main__":
                               tokenizer=tokenizer, 
                               train_dataset=encoded_dataset['train'], 
                               eval_dataset=encoded_dataset['test'], 
-                              output_dir='./automod-model/model_versions/v1-test',
-                              batch_size=1,
-                              epochs=1
+                              output_dir='./automod-model/model_versions/v3',
+                              batch_size=16,
+                              epochs=8
                               )
 
     # Train and evaluate model

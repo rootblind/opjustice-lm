@@ -5,7 +5,7 @@ from optoolkit import DataRegexClassifier, RegexClassifier
 
 if __name__ == "__main__":
     sexual_words = ["pula", "pizda", "tate", "anus", "gaoaza", "penis", "vagin", "sex", "sexy", "rape", "viol", "fut", "futute",
-                    "violez", "masturbez", "laba", "muie", "puli", "pizdi", "muist", "blowjob", "fuck", "dick", "pussy", "pzda"
+                    "violez", "masturbez", "laba", "muie", "puli", "pizdi", "muist", "blowjob", "fuck", "dick", "pussy", "pzda", "porno"
                     ]
     hateful_words = [
         "handicapat", "retardat", "tigan", "bozgor", "nigger", "negrotei", "poponar", "faggot"

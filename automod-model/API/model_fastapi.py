@@ -19,7 +19,7 @@ else:
 
 app = FastAPI()
 
-model_dir = './automod-model/model_versions/v2'
+model_dir = './automod-model/model_versions/v1'
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 labels = [label for label in dataset['train'].features.keys() if label != 'Message']
