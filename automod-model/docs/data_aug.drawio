@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16">
+  <diagram name="Page-1" id="nAbt_ItpZTKtvpkkCNcV">
+    <mxGraphModel dx="1050" dy="570" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-7" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;" vertex="1" parent="1">
+          <mxGeometry x="670" y="120" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-4" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=0;" vertex="1" parent="1">
+          <mxGeometry x="480" y="110" width="70.25" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-2" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=0;" vertex="1" parent="1">
+          <mxGeometry x="230" y="110" width="90" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-1" value="Labeled data" style="shape=parallelogram;html=1;strokeWidth=5;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="100" y="110" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-3" value="Calling method&lt;div&gt;back_to_back_translation&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="320" y="112.54" width="160" height="64.91" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-6" value="Returns the data&lt;div&gt;&amp;nbsp;translated from&lt;/div&gt;&lt;div&gt;&amp;nbsp;primary language to&lt;/div&gt;&lt;div&gt;&amp;nbsp;secondary to primary&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=5;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="530" y="100" width="195" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-8" value="Calling method&lt;div&gt;data_aug_naw&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="770" y="122.5" width="100" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-9" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;" vertex="1" parent="1">
+          <mxGeometry x="870" y="120" width="60" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="9FIyeLCc9lvfZA8zkgkO-11" value="Augmented data&amp;nbsp;&lt;div&gt;by back to back translation&lt;/div&gt;&lt;div&gt;&amp;nbsp;and word swapping&amp;nbsp;&lt;/div&gt;&lt;div&gt;using nlpaug&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=5;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="900" y="120" width="210" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

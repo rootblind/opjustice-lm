@@ -1,0 +1,55 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16">
+  <diagram name="Page-1" id="xwqOsOyZ5FRRm53wjXSb">
+    <mxGraphModel dx="1050" dy="570" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-7" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=2;" vertex="1" parent="1">
+          <mxGeometry x="259.99" y="435" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-4" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="182.5" y="370" width="55" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-2" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="175" y="235" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-1" value="Initialize instance of RegexClassifier(trigger_words, max_typo) for a specific label" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="90" y="180" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-3" value="Initialize instance of DataRegexClassifer(classifier, text_header, label) for a specific label" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="75" y="310" width="270" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-6" value="Load the data into&lt;div&gt;the DataFrame&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=5;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="120" y="435" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-8" value="Calling method&lt;div&gt;classify_data(data)&lt;/div&gt;&lt;div&gt;Adds/Modifies the label&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="359.99" y="430" width="160" height="67.5" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-9" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=-180;" vertex="1" parent="1">
+          <mxGeometry x="519.99" y="435" width="60" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-10" value="&lt;div&gt;Calling&amp;nbsp;&lt;/div&gt;&lt;div&gt;regex_classifier(text)&lt;/div&gt;&lt;div&gt;method&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="579.99" y="440" width="160" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-11" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="629.99" y="372.5" width="60" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-12" value="Returns a boolean by calling trigger_patterns(trigger_words)&lt;div&gt;method&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="564.99" y="310" width="190" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-13" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="627.49" y="240" width="62.5" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-14" value="trigger_patterns returns a join of all patterns of the trigger words array" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=5;" vertex="1" parent="1">
+          <mxGeometry x="549.99" y="180" width="205" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-16" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=5;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;notch=0;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="409.99" y="495" width="60.01" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ke_ycQS9dXnU8W4e75t0-17" value="DataFrame with&lt;div&gt;&amp;nbsp;specified label&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=5;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="345" y="565" width="180" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -289,9 +289,13 @@ class DataToolkit():
 
             - returns: the translated string
         """
-        if debug:
-            print(f'Translated {text[:20]}...')
-        return translator.translate(text)
+        try:
+            if debug:
+                print(f'Translating: {text[:20]}...')
+                return translator.translate(text)
+        except Exception as e:
+            print(f"Skipping translation for '{text[:20]}...': {e}")  # Log the skipped text
+            return text  # Return the original text if translation fails
     
     def translate_data(self, translator, data, text_header, debug=False):
         """
@@ -313,7 +317,7 @@ class DataToolkit():
             - data: The dataframe
             - column: The column to be checked
         """
-        return data.drop_duplicates(subset=column)
+        return data.drop_duplicates(subset=column, keep='first')
     def remove_labels_rows(self, data, labels, value):
         """
             Removes the rows from the dataset that have labels (columns) values equal to the specified value
@@ -383,7 +387,7 @@ class DataToolkit():
 
         for _, row in data.iterrows():
             text = self.filter_text(row[text_column], patterns)
-            if ' ' not in text or len(text) > 512:
+            if len(text) > 512:
                 continue
 
             if len(text) > 2:
@@ -430,7 +434,7 @@ class DataToolkit():
         return aug.augment(text)[0]
     
     def data_aug_naw(self, data, text_column, action, aug_min=1, aug_max=None, stopwords=None,
-                     stopwords_regex=None, target_words=None, case_sensitive=True, verbose=0):
+                     stopwords_regex=None, target_words=None, verbose=0):
         """
             Augments the dataset using naw.RandomWordAug
             - data: the dataframe
@@ -446,7 +450,6 @@ class DataToolkit():
                                 stopwords=stopwords,
                                 stopwords_regex=stopwords_regex,
                                 target_words=target_words,
-                                case_sensitive=case_sensitive,
                                 verbose=verbose
                                 )
         data[text_column] = data[text_column].apply(lambda text: self.aug_naw(text, aug))
