@@ -1,19 +1,36 @@
-# this source file is used just to run scripts, like a work sheet
 import sys, os
-import regex as re
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from optoolkit import DataToolkit
-import pandas as pd
-from deep_translator import GoogleTranslator
 
-dtk = DataToolkit()
+from optoolkit import CNNTransformerClassifier, CNNModelTrainer, DatasetLoader
+from transformers import AutoTokenizer
+import torch
 
-dfs = [
-    pd.read_csv("./automod-model/data_compile/train.csv"),
-    pd.read_csv("./automod-model/data_compile/test.csv"),
-]
+dataset = DatasetLoader(["Message"], "Message")
 
-df_test = pd.concat(dfs, ignore_index=True)
+name = "readerbench/RoBERT-small"
 
-df_test = dtk.remove_duplicates(df_test, df_test.columns)
-df_test.to_csv("./automod-model/data_compile/data.csv", index=False, encoding='utf-8')
+tokenizer = AutoTokenizer.from_pretrained(name)
+encoded_dataset = dataset.encode_dataset(tokenizer)
+
+model = CNNTransformerClassifier(name, len(dataset.labels), dataset.id2label, dataset.label2id,
+                                 device=torch.device("cuda")
+                                 )
+
+trainer = CNNModelTrainer(
+    model, tokenizer, encoded_dataset["train"], encoded_dataset["test"],
+    "automod-model/model_versions/v4-cnn",
+    32, "f1", 8
+
+)
+
+trainer.train()
+trainer.evaluate()
+trainer.save_model()
+
+model = CNNTransformerClassifier(
+    trainer.output_dir, len(dataset.labels), dataset.id2label, dataset.label2id, torch.device("cuda")
+)
+
+text = "mai taci in rasa ma-tii"
+labels = model.label_text(text, tokenizer)
+print(labels)

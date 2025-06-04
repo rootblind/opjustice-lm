@@ -1,14 +1,17 @@
 import numpy as np
 from transformers import AutoModelForSequenceClassification, EvalPrediction, Trainer, TrainingArguments
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel
 from datasets import load_dataset, load_from_disk
 from sklearn.metrics import f1_score, roc_auc_score, precision_score, recall_score, accuracy_score, multilabel_confusion_matrix
 import torch
+import torch.nn as nn
 import nlpaug.augmenter.word as naw
 import regex as re
 import pandas as pd
 import warnings
 import os
 from math import floor
+from transformers.modeling_outputs import SequenceClassifierOutput
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -75,7 +78,7 @@ class DatasetLoader():
                 dict: A dictionary containing tokenized text (e.g., 'input_ids', 'attention_mask') and corresponding labels (multi-label format).
         """
         text = examples[self.text_column]
-        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=512)
+        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=512, return_attention_mask=True)
         labels_batch = {k: examples[k] for k in examples.keys() if k in self.labels}
         labels_matrix = np.zeros((len(text), len(self.labels)))
 
@@ -148,7 +151,7 @@ class Model:
 
             - returns: The probabilities
         """
-        encoding = tokenizer(text, return_tensors="pt")
+        encoding = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True)
         encoding = {k: v.to(self.device) for k, v in encoding.items()}
         with torch.no_grad():
             outputs = self.model(**encoding)
@@ -200,6 +203,8 @@ class Model:
             scores[l] = []
         messages = []
         for _, row in dataset.iterrows():
+            if len(row["Message"]) > 511:
+                continue
             
             labels = self.label_text(row[text_column], tokenizer, label_columns, threshold)
             if len(labels) == 0:
@@ -377,8 +382,8 @@ class DataToolkit():
         """
         patterns = [
             re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'),
-            re.compile(r'<:(\d+):>'),
-            re.compile(r'[^a-zA-Z -]'),
+            re.compile(r"<[^>]*>"),
+            re.compile(r'[^0-9a-zA-Z -]'),
         ]
 
         filtered_data = {text_column: []}
@@ -511,10 +516,7 @@ class RegexClassifier():
 
             - returns: pattern string
         """
-        max_typo = self.max_typo
-        escaped_word = re.escape(word)
-
-        pattern = f"({escaped_word}){{e<={max_typo}}}"
+        pattern = f"({word})"
         return pattern
     
     def trigger_patterns(self, triggerWords):
@@ -531,7 +533,7 @@ class RegexClassifier():
     
     def regex_classifier(self, message):
         """
-            Returns a boolean of weather the patterns match the message
+            Returns a boolean of whether the patterns match the message
         """
         triggerWords = self.triggerWords
         triggerPattern = self.trigger_patterns(triggerWords)
@@ -691,3 +693,141 @@ class ModelTrainer:
             if not param.is_contiguous():
                 param.data = param.data.contiguous()
         self.trainer.save_model(self.output_dir)
+
+
+class CNNTransformerClassifier(PreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.config = config
+        self.model_name = self.config._name_or_path
+        self._device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.transformer = AutoModel.from_pretrained(self.model_name, config=config).to(self._device)
+        hidden_size = self.config.hidden_size
+        num_labels = self.config.num_labels
+        
+        self.cnn = nn.Conv1d(in_channels=hidden_size, out_channels=256, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        self.pool = nn.AdaptiveMaxPool1d(1)
+        
+        self.classifier = nn.Linear(256, num_labels)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, input_ids, attention_mask=None, num_items_in_batch=None, labels=None, **kwargs):
+        outputs = self.transformer(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
+        hidden_states = outputs.last_hidden_state  # [batch_size, seq_len, hidden_dim]
+        
+        cnn_input = hidden_states.permute(0, 2, 1)
+        conv_out = self.cnn(cnn_input)  # shape: (B, 256, L)
+        pooled = self.pool(self.relu(conv_out)).squeeze(-1)
+
+        logits = self.classifier(pooled)
+        
+        loss = None
+        
+        if labels is not None:
+            loss_fct = nn.BCEWithLogitsLoss()
+            loss = loss_fct(logits, labels.float())
+
+        return SequenceClassifierOutput(
+          loss=loss,
+          logits=logits,
+        )
+
+    def predictions(self, text, tokenizer, threshold=0.5):
+        encoding = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True)
+        encoding = {k: v.to(self._device) for k, v in encoding.items()}
+        
+        with torch.no_grad():
+            outputs = self(**encoding)
+
+        logits = outputs.logits
+        sigmoid = torch.nn.Sigmoid()
+        probs = sigmoid(logits.squeeze().cpu())
+        print(probs)
+        predictions = np.zeros(probs.shape)
+        predictions[np.where(probs >= threshold)] = 1
+        predictions[np.argmax(probs)] = 1
+        return predictions
+
+    def label_text(self, text, tokenizer, labels=["OK", "Aggro", "Violence", "Sexual", "Hateful"], threshold=0.5):
+        predictions = self.predictions(text, tokenizer, threshold)
+        predicted_labels = [labels[idx] for idx, label in enumerate(predictions) if label]
+        if 'OK' in predicted_labels:
+            predicted_labels = ['OK']
+
+        return predicted_labels
+    
+
+
+class CNNModelTrainer:
+    def __init__(self, cnn_model, tokenizer, train_dataset, eval_dataset, output_dir, batch_size=16, metric_name="f1", epochs=8,
+                 save_steps=500, weight_decay=0.01, logging_steps=10, lr_scheduler_type='linear', warmup_steps=500):
+        self.model = cnn_model
+        self.tokenizer = tokenizer
+        self.train_dataset = train_dataset
+        self.eval_dataset = eval_dataset
+        self.output_dir = output_dir
+        self.batch_size = batch_size
+        self.metric_name = metric_name
+        self.epochs = epochs
+        self.save_steps = save_steps
+        self.weight_decay = weight_decay
+        self.logging_steps = logging_steps
+        self.lr_scheduler_type = lr_scheduler_type
+        self.warmup_steps = warmup_steps
+        self.trainer = self.initialize_trainer()
+
+    def multi_label_metrics(self, predictions, labels, threshold=0.5):
+        sigmoid = torch.nn.Sigmoid()
+        probs = sigmoid(torch.Tensor(predictions))
+        y_pred = np.zeros(probs.shape)
+        y_pred[np.where(probs >= threshold)] = 1
+        y_true = labels
+        f1_micro = f1_score(y_true=y_true, y_pred=y_pred, average='micro')
+        roc_auc = roc_auc_score(y_true, y_pred, average='micro')
+        accuracy = accuracy_score(y_true, y_pred)
+        return {"f1": f1_micro, "roc_auc": roc_auc, "accuracy": accuracy}
+
+    def compute_metrics(self, p: EvalPrediction):
+        preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+        return self.multi_label_metrics(preds, p.label_ids)
+
+    def initialize_trainer(self):
+        training_args = TrainingArguments(
+            output_dir=self.output_dir,
+            eval_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=2e-5,
+            per_device_train_batch_size=self.batch_size,
+            per_device_eval_batch_size=self.batch_size,
+            num_train_epochs=self.epochs,
+            load_best_model_at_end=True,
+            metric_for_best_model=self.metric_name,
+            save_steps=self.save_steps,
+            weight_decay=self.weight_decay,
+            logging_steps=self.logging_steps,
+            lr_scheduler_type=self.lr_scheduler_type,
+            warmup_steps=self.warmup_steps
+        )
+
+        return Trainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
+            tokenizer=self.tokenizer,
+            compute_metrics=self.compute_metrics,
+        )
+
+    def train(self):
+        for param in self.model.parameters():
+            if not param.is_contiguous():
+                param.data = param.data.contiguous()
+        self.trainer.train()
+
+    def evaluate(self):
+        return self.trainer.evaluate()
+
+    def save_model(self):
+        self.trainer.save_model(self.output_dir)
+        self.tokenizer

@@ -10,8 +10,8 @@ if __name__ == "__main__":
     dataset = DatasetLoader(["Message"], "Message")
     
     # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained('./automod-model/model_versions/v1')
-    model = Model(model_name='./automod-model/model_versions/v1', 
+    tokenizer = AutoTokenizer.from_pretrained('./automod-model/model_versions/v4')
+    model = Model(model_name='./automod-model/model_versions/v4', 
                                    num_labels=len(dataset.labels), 
                                    id2label=dataset.id2label, 
                                    label2id=dataset.label2id)
