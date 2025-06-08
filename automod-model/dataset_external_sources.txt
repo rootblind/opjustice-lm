@@ -1,0 +1,7 @@
+https://www.kaggle.com/datasets/waalbannyantudre/hate-speech-detection-curated-dataset/data
+https://huggingface.co/datasets/readerbench/ro-offense
+https://huggingface.co/datasets/readerbench/ro-fb-offense
+https://www.kaggle.com/datasets/reihanenamdari/youtube-toxicity-data
+https://huggingface.co/datasets/mmathys/openai-moderation-api-evaluation
+https://github.com/guzimanis/ROFF/blob/master/ROFF.tsv?h=1
+https://huggingface.co/datasets/readerbench/news-ro-offense

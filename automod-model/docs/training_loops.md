@@ -144,7 +144,7 @@ Accuracy: 0.8641580432737536
 ROC AUC: 0.9383795007749696
 ```
 
-### Comparing v4 with different classification NLPs on its dataset
+### Comparing v4 with Masked Language Modeling NLPs on its dataset
 
 ```
 RoBERT-small
@@ -181,4 +181,45 @@ Precision: 0.8859079763450166
 Recall: 0.88183776022972
 Accuracy: 0.7952963311382879
 ROC AUC: 0.9048207626939002
+```
+
+### Applying label balancing
+Random Oversampling minority
+(+10.000 samples)
+
+```
+F1 Score: 0.921090387374462
+Precision: 0.9192439862542955
+Recall: 0.9229442208165612
+Accuracy: 0.8671315491895967
+ROC AUC: 0.9414748046988624
+```
+
+Random Oversampling not majority strategy
+(+200.000 samples)
+```
+F1 Score: 0.9223803363518758
+Precision: 0.922247772348376
+Recall: 0.9225129384703853
+Accuracy: 0.8707124010554089
+ROC AUC: 0.9418716204034278
+```
+
+Class weights balance
+```
+F1 Score: 0.916948786285385
+Precision: 0.9188681969106395
+Recall: 0.9150373778033353
+Accuracy: 0.8612891066716925
+ROC AUC: 0.9372997570171183
+```
+
+### Fine tuning dumitrescustefan/bert-base-romanian-cased-v1
+
+```
+F1 Score: 0.9183658765040709
+Precision: 0.9205546728296982
+Recall: 0.9161874640598044
+Accuracy: 0.8654353562005277
+ROC AUC: 0.9331310541014357
 ```

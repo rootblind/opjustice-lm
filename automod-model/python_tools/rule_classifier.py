@@ -15,7 +15,7 @@ if __name__ == "__main__":
         "labar", "labagiu", "child( )?porn", "cum( )?shot", "o sug(i|eti|e)?", "whore", "slut", "sperm"
     ]
     hateful_words = [
-        "handicapat", "retard", "tigan", "bozgor", "n(i)+?(g)+(e)+?(r)+?", "negrotei", "poponar", "fa(g)+(ot)?", "nigro",
+        "handicapat", "retard", "tigan", "bozgor", "n(i)+?(g)+(e)+?(r)+?", "negrotei", "poponar", "fa(g)+(ot)", "nigro",
         "tigan", "ungur[a-z]+? imputit", "kike", "rusnac", "chink", "homalau", "d(i|y)ke",
         "autist", "pajeet", "exterminarea rasei [a-z]+", "rasa [a-z]+ trebuie sa moara", "gas chamber", "nigg",
         "trann(ie|y)", "esti masina de spalat", "(mars|du(-| )?te) (in|la|fa) (bucatarie|cratita|mancare|cartofi|senvis|sandwich|spalat)",

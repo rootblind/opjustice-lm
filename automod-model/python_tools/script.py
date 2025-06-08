@@ -4,33 +4,29 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from optoolkit import CNNTransformerClassifier, CNNModelTrainer, DatasetLoader
 from transformers import AutoTokenizer
 import torch
+from datasets import Dataset
+from imblearn.over_sampling import RandomOverSampler
+import numpy as np
 
 dataset = DatasetLoader(["Message"], "Message")
 
-name = "readerbench/RoBERT-small"
+train = dataset.dataset["train"]
+x_train = np.array(dataset.dataset["train"]["Message"]).reshape(-1, 1)
 
-tokenizer = AutoTokenizer.from_pretrained(name)
-encoded_dataset = dataset.encode_dataset(tokenizer)
+columns = dataset.labels
+labels = np.stack([train[col] for col in columns], axis=1)
 
-model = CNNTransformerClassifier(name, len(dataset.labels), dataset.id2label, dataset.label2id,
-                                 device=torch.device("cuda")
-                                 )
+label_keys = ["".join(map(str, row)) for row in labels.tolist()]
 
-trainer = CNNModelTrainer(
-    model, tokenizer, encoded_dataset["train"], encoded_dataset["test"],
-    "automod-model/model_versions/v4-cnn",
-    32, "f1", 8
+ros = RandomOverSampler()
+texts_resampled, label_keys_resampled = ros.fit_resample(x_train, label_keys)
 
-)
+labels_resampled = [list(map(int, list(key))) for key in label_keys_resampled]
 
-trainer.train()
-trainer.evaluate()
-trainer.save_model()
+resampled_train = Dataset.from_dict({
+    "Message": [x[0] for x in texts_resampled],
+    **{col: [label[i] for label in labels_resampled] for i, col in enumerate(columns)}
+})
 
-model = CNNTransformerClassifier(
-    trainer.output_dir, len(dataset.labels), dataset.id2label, dataset.label2id, torch.device("cuda")
-)
-
-text = "mai taci in rasa ma-tii"
-labels = model.label_text(text, tokenizer)
-print(labels)
+print(resampled_train)
+print(dataset.dataset["train"])

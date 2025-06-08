@@ -8,10 +8,17 @@ import torch.nn as nn
 import nlpaug.augmenter.word as naw
 import regex as re
 import pandas as pd
+from datasets import Dataset
 import warnings
+from imblearn.over_sampling import RandomOverSampler
 import os
 from math import floor
+from imblearn.over_sampling import ADASYN
+from torch.nn import BCEWithLogitsLoss
+from collections import Counter
 from transformers.modeling_outputs import SequenceClassifierOutput
+from sklearn.feature_extraction.text import TfidfVectorizer
+from imblearn.combine import SMOTETomek
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -112,6 +119,7 @@ class DatasetLoader():
         X_test = [sample[text_column] for sample in loaded_dataset['test']]
         y_test = [[sample[label] for label in self.labels] for sample in loaded_dataset['test']]
         return X_test, y_test
+
 
 class Model:
     def __init__(self, model_name, num_labels, id2label, label2id, device=None):
@@ -299,8 +307,8 @@ class DataToolkit():
                 print(f'Translating: {text[:20]}...')
                 return translator.translate(text)
         except Exception as e:
-            print(f"Skipping translation for '{text[:20]}...': {e}")  # Log the skipped text
-            return text  # Return the original text if translation fails
+            print(f"Skipping translation for '{text[:20]}...': {e}")
+            return text
     
     def translate_data(self, translator, data, text_header, debug=False):
         """
@@ -429,7 +437,7 @@ class DataToolkit():
         
         data = self.translate_data(translator_primary, data, text_column, debug)
         data = self.translate_data(translator_secondary, data, text_column, debug)
-        return data # must be assigned to the entire dataset, not only the text column
+        return data
     def aug_naw(self, text, aug):
         """
             Using nlpaug.RandomWordAug to augment the given text.
@@ -496,8 +504,97 @@ class DataToolkit():
         test = pd.concat(test_frames).sample(frac=1, random_state=42).reset_index(drop=True)
         
         return train, test
+    
+    def preprocess_data(self, dataset, tokenizer, labels, text_column="Message"):
+        text = dataset[text_column]
+        encoding = tokenizer(text, padding="max_length", truncation=True, max_length=512, return_attention_mask=True)
+        labels_batch = {k: dataset[k] for k in dataset.keys() if k in labels}
+        labels_matrix = np.zeros((len(text), len(labels)))
+
+        for idx, label in enumerate(labels):
+            labels_matrix[:, idx] = labels_batch[label]
+
+        encoding["labels"] = labels_matrix.tolist()
+        return encoding
+    
+    def encode_dataset(self, dataset, tokenizer):
+        encoded_dataset = dataset.map(lambda x: self.preprocess_data(x, tokenizer, dataset.column_names[1:]),
+                                      batched=True, remove_columns=dataset.column_names)
+        encoded_dataset.set_format("torch")
+        return encoded_dataset
+    
+    def ros_datasets(self, train, columns, text_column="Message", strategy="auto"):
+        x_train = np.array(train[text_column]).reshape(-1, 1)
+        labels = np.stack([train[col] for col in columns], axis=1)
+
+        label_keys = ["".join(map(str, row)) for row in labels.tolist()]
+
+        ros = RandomOverSampler(sampling_strategy=strategy)
+
+        texts_resampled, label_keys_resampled = ros.fit_resample(x_train, label_keys)
+
+        labels_resampled = [list(map(int, list(key))) for key in label_keys_resampled]
+
+        resampled_train = Dataset.from_dict({
+            "Message": [x[0] for x in texts_resampled],
+            **{col: [label[i] for label in labels_resampled] for i, col in enumerate(columns)}
+        })
+
+        return resampled_train
+
+    def smotetomek(self, train, columns, text_column="Message"):
+        x_train = np.array(train[text_column])
+        labels = np.stack([train[col] for col in columns], axis=1)
+
+        label_keys = ["".join(map(str, row)) for row in labels.tolist()]
+
+        vectorizer = TfidfVectorizer()
+        X = vectorizer.fit_transform(x_train)
+
+        smk = SMOTETomek(random_state=42)
+        X_resampled, y_resampled = smk.fit_resample(X, label_keys)
+
+        texts_resampled = [x_train[i] for i in smk.sample_indices_]
+
+        labels_resampled = [list(map(int, list(key))) for key in y_resampled]
+
+        resampled_train = Dataset.from_dict({
+            text_column: texts_resampled,
+            **{col: [label[i] for label in labels_resampled] for i, col in enumerate(columns)}
+        })
+
+        return resampled_train
+    
+    def adasyn_resample(self, train, columns, text_column="Message"):
+        x_train = np.array(train[text_column])
+        labels = np.stack([train[col] for col in columns], axis=1)
 
 
+        label_keys = ["".join(map(str, row)) for row in labels.tolist()]
+
+        vectorizer = TfidfVectorizer(max_features=10000)
+        X = vectorizer.fit_transform(x_train)
+
+        class_counts = Counter(label_keys)
+        min_samples = min(class_counts.values())
+
+        if min_samples < 6:
+            raise ValueError("ADASYN requires at least 6 samples per class. Try RandomOverSampler instead.")
+
+        adasyn = ADASYN(sampling_strategy='auto', random_state=42, n_neighbors=5)
+        X_resampled, y_resampled = adasyn.fit_resample(X, label_keys)
+
+        # Recover the text data and labels
+        indices = adasyn.sample_indices_
+        texts_resampled = [x_train[i] for i in indices]
+        labels_resampled = [list(map(int, list(key))) for key in y_resampled]
+
+        resampled_train = Dataset.from_dict({
+            text_column: texts_resampled,
+            **{col: [label[i] for label in labels_resampled] for i, col in enumerate(columns)}
+        })
+
+        return resampled_train
 
     
 class RegexClassifier():
@@ -599,6 +696,25 @@ class ModelTrainer:
         self.lr_scheduler_type = lr_scheduler_type
         self.warmup_steps = warmup_steps
         self.trainer = self.initialize_trainer()
+
+    def compute_class_weights(self):
+        all_labels = torch.tensor(self.train_dataset["labels"])
+        counts = all_labels.sum(dim=0)
+        counts = torch.clamp(counts, min=1.0)
+        weights = 1.0 / counts
+        weights = weights / weights.sum()
+        return weights
+    
+    def compute_loss(self, model, inputs, return_outputs=False):
+        pos_weight = self.compute_class_weights()
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        logits = outputs.logits
+
+        loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight.to(logits.device))
+        loss = loss_fct(logits, labels.float())
+
+        return (loss, outputs) if return_outputs else loss
 
     def multi_label_metrics(self, predictions, labels, threshold=0.5):
         """
@@ -714,10 +830,10 @@ class CNNTransformerClassifier(PreTrainedModel):
 
     def forward(self, input_ids, attention_mask=None, num_items_in_batch=None, labels=None, **kwargs):
         outputs = self.transformer(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
-        hidden_states = outputs.last_hidden_state  # [batch_size, seq_len, hidden_dim]
+        hidden_states = outputs.last_hidden_state
         
         cnn_input = hidden_states.permute(0, 2, 1)
-        conv_out = self.cnn(cnn_input)  # shape: (B, 256, L)
+        conv_out = self.cnn(cnn_input)
         pooled = self.pool(self.relu(conv_out)).squeeze(-1)
 
         logits = self.classifier(pooled)
@@ -732,6 +848,19 @@ class CNNTransformerClassifier(PreTrainedModel):
           loss=loss,
           logits=logits,
         )
+    
+    def predict(self, text, tokenizer):
+        encoding = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True)
+        encoding = {k: v.to(self._device) for k, v in encoding.items()}
+        
+        with torch.no_grad():
+            outputs = self(**encoding)
+
+        logits = outputs.logits
+        sigmoid = torch.nn.Sigmoid()
+        probs = sigmoid(logits.squeeze().cpu())
+
+        return probs
 
     def predictions(self, text, tokenizer, threshold=0.5):
         encoding = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True)
@@ -743,7 +872,6 @@ class CNNTransformerClassifier(PreTrainedModel):
         logits = outputs.logits
         sigmoid = torch.nn.Sigmoid()
         probs = sigmoid(logits.squeeze().cpu())
-        print(probs)
         predictions = np.zeros(probs.shape)
         predictions[np.where(probs >= threshold)] = 1
         predictions[np.argmax(probs)] = 1
@@ -831,3 +959,13 @@ class CNNModelTrainer:
     def save_model(self):
         self.trainer.save_model(self.output_dir)
         self.tokenizer
+
+class CustomTrainer(Trainer):
+    def __init__(self, *args, compute_loss_fn=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.compute_loss_fn = compute_loss_fn
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        if self.compute_loss_fn is not None:
+            return self.compute_loss_fn(model, inputs, return_outputs)
+        return super().compute_loss(model, inputs, return_outputs)
