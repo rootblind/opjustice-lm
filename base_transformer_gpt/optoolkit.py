@@ -755,7 +755,7 @@ class BaseModelTrainer:
                     elapsed_formatted = str(timedelta(seconds=int(elapsed_time)))
                     
                     print(
-                        f"iteration {iteration} / step {batch_idx}: "
+                        f"\niteration {iteration} / step {batch_idx}: "
                         f"({progress_percent:.2f}% done, Elapsed: {elapsed_formatted}, ETA: {eta_formatted}): "
                         f"train loss {losses['train']:.4f}, "
                         f"val loss {losses['val']:.4f}"

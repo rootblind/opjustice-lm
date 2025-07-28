@@ -7,8 +7,8 @@ tokenizer = RegexTokenizer()
 tokenizer.load("chatbot-ai/tokenizer/large/tokenizer.model")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-block_size=512
-n_embd=512
+block_size=256
+n_embd=256
 n_head=4
 n_layer=2
 dropout=0.2
@@ -16,7 +16,9 @@ seq_file = "chatbot-ai/dataset/sequence.txt"
 batch_size = 32
 split = 0.95
 learning_rate = 1e-4
-eval_interval = 5
+eval_interval = 100
+lora_alpha = 16
+lora_rank = 8
 
 version = "chatbot-ai/versions/prototype"
 
@@ -51,10 +53,12 @@ finetuner = FineTuning(
     n_layer=n_layer,
     dropout=dropout,
     learning_rate=learning_rate,
-    max_iters=2,
+    max_iters=4,
     eval_interval=eval_interval,
     use_lora=True,
-    use_scheduler=True
+    use_scheduler=True,
+    rank=lora_rank,
+    alpha=lora_alpha
 )
 print(f"Tokenizer vocab size: {len(tokenizer.vocab) + len(tokenizer.special_tokens)}")
 print(f"Model vocab size: {model.get_vocab_size()}")

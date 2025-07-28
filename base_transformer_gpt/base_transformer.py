@@ -16,16 +16,18 @@ def add_lora_layers(model: BaseTransformerModel, device: torch.device, rank: int
     return model
 
 tokenizer = BasicTokenizer()
-tokenizer.load("chatbot-ai/tokenizer/large/tokenizer.model")
+tokenizer.load("chatbot-ai/tokenizer/tokenizer.model")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 block_size=256
-n_embd=512
+n_embd=256
 n_head=4
-n_layer=2
-dropout=0.2
-seq_file = "chatbot-ai/dataset/sequence-500k.txt"
+n_layer=4
+dropout=0.1
 batch_size = 32
+lora_rank = 4
+lora_alpha = 16
+seq_file = "chatbot-ai/dataset/sequence-500k.txt"
 
 model = BaseTransformerModel(
     tokenizer=tokenizer,
@@ -38,7 +40,7 @@ model = BaseTransformerModel(
     ignore_index=tokenizer.special_tokens["<|padding|>"]
 ).to(device)
 
-model = add_lora_layers(model, device) # uncomment to train with lora layers
+model = add_lora_layers(model, device, lora_rank, lora_alpha) # uncomment to train with lora layers
 # Check model device
 print(f"Model is on: {next(model.parameters()).device}")
 
@@ -61,7 +63,8 @@ trainer = BaseModelTrainer(
     train_loader=train,
     val_loader=test,
     file_dir="chatbot-ai/versions/prototype",
-    max_iters=4
+    max_iters=4,
+    use_scheduler=True
 )
 
 trainer.train()
