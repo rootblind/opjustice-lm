@@ -1,70 +1,48 @@
 
-# OPJUSTICE Language Model (project on going)
+# OPJUSTICE Language Models
 
 This project aims to become a collection of language models that will bring any chatbot to a new level of engagement and moderation.
 
 Present models:
-- automod-model: Multi label text classification model that can recognize up to 8 categories
+- automod: Multi label text classification model that can recognize up to 8 categories
+- chatbot: Transformer GPT2-like model
 
-Future models:
-- chatbot-model: Will give life to
-- image-model: In completion to automod-model, image-model will make sure to flag messages that contain NSFW media
 
 opjustice-lm comes as an extension of my other project, justice-bot, through its API.
 
 Visit my discord bot project [here](https://github.com/rootblind/justice-bot).
  
+# Automod Model
 
- This project is ON GOING, you can raise **issues** if you wish to contribute!
-
-# Automod-Model
-
-The following sections will give info about the automod-model.
+The following sections will give info about the automod.
 ## Labels
 
 You can find an example [here](https://github.com/rootblind/opjustice-lm/blob/main/automod-model/example_dataset.csv).
 
 - OK: There is nothing wrong with this message
-- Insult: Bad usage of words against another person
-- Violence: Showing or encouraging violence
+- Aggro: Content that might start an argument with someone else through insults or other toxic behaviors
+- Violence: Graphical descriptions of or encouraging violence
 - Sexual: Sexual content
 - Hateful: Usage of slurs or hating a group of people
-- Flirt: Showing romantic intent towards another person
-- Spam
-- Aggro: Content that might start an argument with someone else
 
 ## Model version
-No model version is yet public, will update this section with the huggingface repository in the future.
+- [Hugging Face](https://huggingface.co/rootblind/opjustice-lm/tree/main) repository
 
 ## Dataset
 
-The model is trained mainly on Romanian language and a very small sample of English.
+- [Hugging Face](https://huggingface.co/datasets/rootblind/opjustice-dataset)
+
+The model is trained mainly on Romanian language and very small samples of English.
 
 The dataset consists of discord messages sent on my discord server (League of Legends Romania) using a discord bot to scrape the text channels for messages (you can check that [here](https://github.com/rootblind/dataminer-bot)).
 
-The labeling is done both manually and self thought through the help of another model [readerbench/ro-offense](https://huggingface.co/readerbench/ro-offense).
-
-The dataset that the model currently uses can be found on huggingface [here](https://huggingface.co/datasets/rootblind/opjustice-dataset).
-
-## Scripts
-
-In the `python_tools` directory there are scripts that I used to work with the data.
-
-Training scripts:
-- prepare-dataset: Uses the model to label an unlabeled dataset, it can optionally append the newly labeled dataset to an existing one.
-- append_csv: appends a dataset to another, I use this functionality by running this script instead of inside prepare-dataset because that way I can check and correct the results
-- load_model: Loading the model and sending text input to test out the outputs
-- model: The training script
-
-## Training Loop
-
-Having an initial model and dataset, I would collect unlabeled data, then use prepare-dataset on it, correct the labeling, use append_csv, run model.py on the new data and use load_model to test the new model that resulted.
-
-Then I would update inside the scripts which model version to use for the next training loop.
+The labeling is done both manually and automated through regex based logic.
 
 
-## Demo / Tutorial
-This section will be updated at a later date when the project is mature enough.
+## Training Loops
+
+Check out [this](https://github.com/rootblind/opjustice-lm/blob/main/automod-model/docs/training_loops.md) readme used to note observations about the model after each training loop.
+
 
 # About project section
 
@@ -106,8 +84,12 @@ In case you're using a virtual environment, make sure to run the `activate.bat` 
  - [Transformers](https://huggingface.co/docs/transformers/index)
  - [scikit-learn](https://scikit-learn.org/stable/)
 ## Credits
-- Code example [Fine-tuning BERT (and friends) for multi-label text classification](https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=mEkAQleMMT0k)
+- Code example for the automod model: [Fine-tuning BERT (and friends) for multi-label text classification](https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=mEkAQleMMT0k)
 
+- Video course used for the chatbot model: [Train Your Own LLM – Tutorial](https://youtu.be/9Ge0sMm65jo)
+
+# Related work:
+- [OPJUSTICE - A Multi-label Text Classification Model](https://repository.ifipaiai.org/2025/abstr/25dc05431.html) paper submitted at AIAI2025
 
 ## Author
 
