@@ -529,14 +529,12 @@ class BaseTransformerModel(nn.Module):
         """
 
         B, T = input_tokens.shape
-        # 1. Check token indices
         if (input_tokens >= self.vocab_size).any():
             invalid = input_tokens >= self.vocab_size
             print(f"Invalid tokens found: {input_tokens[invalid]}")
             print(f"Max allowed index: {self.vocab_size - 1}")
             raise ValueError("Token indices exceed vocabulary size")
 
-        # 2. Check sequence length
         if T > self.block_size:
             raise ValueError(f"Sequence length {T} exceeds block_size {self.block_size}")
         token_embedding = self.token_embedding_table(input_tokens)  # (B,T,C)
@@ -572,21 +570,14 @@ class BaseTransformerModel(nn.Module):
                         Tensor of token indices of shape (batch_size, sequence_length + max_new_tokens)
                 """
 
-        # input_tokens is (B, T) array of indices in the current context
         for _ in range(max_new_tokens):
-            # crop input_tokens to the last block_size tokens
             cropped_input = input_tokens[:, -self.block_size:]
-            # get the predictions
             logits, _ = self(cropped_input)
-            # focus only on the last time step
-            logits = logits[:, -1, :]  # becomes (B, C)
-            # apply softmax to get probabilities
-            probs = F.softmax(logits, dim=-1)  # (B, C)
-            # sample from the distribution
-            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
-            # append sampled index to the running sequence
+            logits = logits[:, -1, :]
+            probs = F.softmax(logits, dim=-1)
+            idx_next = torch.multinomial(probs, num_samples=1)
             input_tokens = torch.cat(
-                (input_tokens, idx_next), dim=1)  # (B, T+1)
+                (input_tokens, idx_next), dim=1)
         return input_tokens
     
     def advanced_generation(
