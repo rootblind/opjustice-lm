@@ -1,32 +1,12 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from optoolkit import CNNTransformerClassifier, CNNModelTrainer, DatasetLoader
-from transformers import AutoTokenizer
-import torch
-from datasets import Dataset
-from imblearn.over_sampling import RandomOverSampler
-import numpy as np
+import pandas as pd
+from optoolkit import DataToolkit
 
-dataset = DatasetLoader(["Message"], "Message")
+dtk = DataToolkit()
+df = pd.read_csv("automod-model/data_dumps/fw_flag_data.csv", encoding="utf-8")
+train, test = dtk.split_train_test(df, df.columns[1:])
 
-train = dataset.dataset["train"]
-x_train = np.array(dataset.dataset["train"]["Message"]).reshape(-1, 1)
-
-columns = dataset.labels
-labels = np.stack([train[col] for col in columns], axis=1)
-
-label_keys = ["".join(map(str, row)) for row in labels.tolist()]
-
-ros = RandomOverSampler()
-texts_resampled, label_keys_resampled = ros.fit_resample(x_train, label_keys)
-
-labels_resampled = [list(map(int, list(key))) for key in label_keys_resampled]
-
-resampled_train = Dataset.from_dict({
-    "Message": [x[0] for x in texts_resampled],
-    **{col: [label[i] for label in labels_resampled] for i, col in enumerate(columns)}
-})
-
-print(resampled_train)
-print(dataset.dataset["train"])
+train.to_csv("automod-model/data_compile/train.csv", index=False, encoding="utf-8")
+test.to_csv("automod-model/data_compile/test.csv", index=False, encoding="utf-8")

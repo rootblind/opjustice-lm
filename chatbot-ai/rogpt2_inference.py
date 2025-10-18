@@ -1,7 +1,7 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 
-model_path = "./chatbot-ai/versions/v1/fine_tuned_gpt2"
+model_path = "./chatbot-ai/versions/v1/checkpoint-145"
 model = GPT2LMHeadModel.from_pretrained(model_path)
 tokenizer = GPT2Tokenizer.from_pretrained(model_path)
 

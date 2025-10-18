@@ -1,5 +1,6 @@
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
+from transformers.trainer_callback import EarlyStoppingCallback
 from datasets import load_dataset
 import torch
 
@@ -9,7 +10,7 @@ model_name = "readerbench/RoGPT2-base"
 model = GPT2LMHeadModel.from_pretrained(model_name)
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 tokenizer.add_special_tokens({
-    "additional_special_tokens": ["<|start_turn|>", "<|end_turn|>", "<|separator|>", "<|padding|>"]
+    "additional_special_tokens": ["<|start_turn|>", "<|end_turn|>", "<|separator|>", "<|padding|>", "<|endoftext|>"]
 })
 tokenizer.add_special_tokens({'pad_token': "<|padding|>"})
 model.resize_token_embeddings(len(tokenizer))
@@ -45,20 +46,23 @@ val_dataset = tokenized_datasets.select(range(train_size, len(tokenized_datasets
 training_args = TrainingArguments(
     output_dir="./chatbot-ai/versions/v1",
     overwrite_output_dir=True,
-    num_train_epochs=4,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
-    save_steps=1000,
+    num_train_epochs=5,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=4,
+    save_steps=100,
     save_total_limit=2,
     logging_dir="./chatbot-ai/logs",
     logging_steps=500,
-    eval_strategy="epoch",
+    eval_strategy="steps",
+    save_strategy="steps",
+    eval_steps=100,
     disable_tqdm=False,
-    learning_rate=1e-4,
-    #load_best_model_at_end=True,
+    learning_rate=3e-5,
+    load_best_model_at_end=True,
     weight_decay=0.01,
     lr_scheduler_type="linear",
-    warmup_steps=500
+    warmup_steps=50
 
 )
 
@@ -67,6 +71,7 @@ trainer = Trainer(
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
+    callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
 )
 
 # 8. Start Fine-Tuning

@@ -38,8 +38,8 @@ if __name__ == "__main__":
                               tokenizer=tokenizer, 
                               train_dataset=encoded_dataset['train'], 
                               eval_dataset=encoded_dataset['test'], 
-                              output_dir='./automod-model/model_versions/v3',
-                              batch_size=16,
+                              output_dir='./automod-model/model_versions/v5',
+                              batch_size=32,
                               epochs=8
                               )
 
