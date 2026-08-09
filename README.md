@@ -6,7 +6,7 @@ opjustice-lm comes as an extension of my other project, justice-bot, through its
 
 Visit my discord bot project [here](https://github.com/rootblind/justice-bot).
 
-Check the architecture documentation for more details.
+Check the [architecture](https://github.com/rootblind/opjustice-lm/blob/main/architecture.md) documentation for more details.
 ## Labels
 
 You can find an example [here](https://github.com/rootblind/opjustice-lm/blob/main/automod-model/example_dataset.csv).
