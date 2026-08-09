@@ -1,20 +1,12 @@
 
 # OPJUSTICE Language Models
 
-This project aims to become a collection of language models that will bring any chatbot to a new level of engagement and moderation.
-
-Present models:
-- automod: Multi label text classification model that can recognize up to 8 categories
-- chatbot: Transformer GPT2-like model
-
 
 opjustice-lm comes as an extension of my other project, justice-bot, through its API.
 
 Visit my discord bot project [here](https://github.com/rootblind/justice-bot).
- 
-# Automod Model
 
-The following sections will give info about the automod.
+Check the architecture documentation for more details.
 ## Labels
 
 You can find an example [here](https://github.com/rootblind/opjustice-lm/blob/main/automod-model/example_dataset.csv).
@@ -42,9 +34,6 @@ The labeling is done both manually and automated through regex based logic.
 ## Training Loops
 
 Check out [this](https://github.com/rootblind/opjustice-lm/blob/main/automod-model/docs/training_loops.md) readme used to note observations about the model after each training loop.
-
-
-# About project section
 
 ## How to Use
 
@@ -74,10 +63,6 @@ Make sure to replace the <> with your use case.
 ```
 
 In case you're using a virtual environment, make sure to run the `activate.bat` script first in your command line. It can be found in `/venv/Scripts/`.
-
-
-## Get the latest Python version from here:
-[Click](https://www.python.org/)
 
 ## Technologies used
  - [PyTorch](https://pytorch.org/)
